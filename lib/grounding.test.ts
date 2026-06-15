@@ -3,6 +3,8 @@ import {
   buildSystemPrompt,
   parseGateResult,
   declineMessage,
+  offTopicNudge,
+  repeatPrefix,
   COVERAGE_SCHEMA,
 } from "./grounding";
 
@@ -43,6 +45,16 @@ describe("declineMessage", () => {
     expect(declineMessage("vi")).toContain("Discord");
     expect(declineMessage("en")).toContain("Discord");
     expect(declineMessage("vi")).not.toEqual(declineMessage("en"));
+  });
+});
+
+describe("offTopicNudge / repeatPrefix", () => {
+  it("are language-specific and non-empty", () => {
+    expect(offTopicNudge("vi")).toContain("AABW");
+    expect(offTopicNudge("en")).toContain("AABW");
+    expect(offTopicNudge("vi")).not.toEqual(offTopicNudge("en"));
+    expect(repeatPrefix("vi")).not.toEqual(repeatPrefix("en"));
+    expect(repeatPrefix("en").length).toBeGreaterThan(0);
   });
 });
 

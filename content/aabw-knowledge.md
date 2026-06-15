@@ -17,3 +17,9 @@ F14. Seat workshop có hạn, hết nhanh. Link đăng ký thả trong nhóm Dis
 F15. Có thể submit sự kiện cộng đồng của bạn (workshop, demo night, meetup từ nay đến 12/07) để được feature trên trang AABW.
 F16. AABW đang tìm volunteer hỗ trợ tổ chức.
 F17. Checklist builder: đăng ký webinar 23/06; bắt đầu build ở track Builder Experience (đóng 20/06); join Discord + WhatsApp; chọn workshop; submit sự kiện cộng đồng; volunteer.
+F18. Quy mô dự kiến (theo trang chính thức aabw.genaifund.ai): hơn 2.000 AI builder, mục tiêu 500 dự án agentic, 30+ workshop/AI enabler, 10 đối tác doanh nghiệp.
+F19. Tổng giải thưởng (prize pool) hơn 1.000.000 USD ($1M+). Track khởi động trước sự kiện (Builder Experience / pre-event) có thưởng hơn 900 USD ($900+).
+F20. Đăng ký THAM DỰ sự kiện qua nền tảng Luma. Riêng việc lập team và nộp BÀI THI vẫn làm trên DevPost (xem F03). Tham gia Discord là điều kiện để nhận thưởng referral (giới thiệu).
+F21. Định dạng chương trình: 5 ngày kết hợp workshop + hackathon.
+F22. Đối tác chiến lược: AWS. Các đối tác công nghệ gồm NVIDIA, Tencent Cloud, Microsoft for Startups, Google for Developers, Kimi, Agora, Databricks, BytePlus, Notion và hơn 90 đối tác khác.
+F23. Có chương trình referral (giới thiệu) kèm bảng xếp hạng (leaderboard).

@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trợ lý AABW
 
-## Getting Started
+Grounded support bot cho **Agentic AI Build Week**. Trả lời câu hỏi về sự kiện **chỉ dựa trên** `content/aabw-knowledge.md`; **từ chối (không bịa)** khi câu hỏi không có trong dữ liệu. Song ngữ **VN + EN**.
 
-First, run the development server:
+Port thu nhỏ 2 nguyên tắc của Kaori: grounding "decline-if-insufficient" (K-3) + AI disclosure máy-đọc-được (K-24). Có spam guard (chặn câu lặp/tương đương + flood câu ngoài chủ đề, tiết kiệm token).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Stack
+Next.js 16 (App Router) + TypeScript + Tailwind · `@anthropic-ai/sdk` (`claude-haiku-4-5`, structured output) · Vitest.
+
+## Dev
+1. `npm ci`
+2. Tạo `.env.local` với `ANTHROPIC_API_KEY=sk-ant-...`
+3. `npm run dev` → http://localhost:3000
+
+## Test
+`npm test` (unit, dùng mock — không cần API key)
+
+## Cập nhật knowledge base
+Sửa `content/aabw-knowledge.md` (giữ các mã `Fxx`), rồi rebuild + restart (KB được cache trong process):
+```
+git pull && npm run build && pm2 reload tro-ly-aabw
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy
+Hostinger VPS — xem `DEPLOY_PROMPT.md` (prompt copy-paste cho agent có SSH, deploy SONG SONG không đụng dự án cũ trên VPS).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Kiến trúc
+- `content/aabw-knowledge.md` — facts chính thức, mã `Fxx`.
+- `lib/knowledge.ts` — load KB.
+- `lib/grounding.ts` — system prompt + coverage-gate schema + parse + decline/nudge messages + disclosure.
+- `lib/gate.ts` — gọi Claude với structured output `{covered, citations, answer}`.
+- `lib/ratelimit.ts` — rate limit per-IP.
+- `lib/spam.ts` — chặn câu lặp/tương đương + flood ngoài chủ đề.
+- `app/api/chat/route.ts` — POST: rate-limit → spam guard → gate → JSON.
+- `app/page.tsx` — chat UI VN/EN, citations, disclosure badge.
