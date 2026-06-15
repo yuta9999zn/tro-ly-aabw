@@ -83,6 +83,7 @@ Mỗi câu trả lời UI đính nhãn máy-đọc-được: `Tạo bởi AI · 
 
 Đã chốt: deploy lên **Hostinger VPS** (anh đang có sẵn).
 - **Server:** Ubuntu 24.04 LTS · KVM 2 (2 vCPU / ~8GB RAM) · IP `31.97.70.221` · root SSH.
+- **⚠️ VPS đã chạy 1 dự án khác** → app này deploy **song song, cô lập, không đụng dự án cũ**: port riêng (vd 3100, kiểm `ss -ltnp` trước), PM2 process tên riêng, **server block nginx mới** (không sửa block cũ), Node cài qua `nvm` dưới user `deploy` (không đổi Node global), ufw kiểm trạng thái trước khi bật. Tài nguyên KVM2 thừa cho 2 app nhỏ.
 - Node.js runtime đầy đủ → API key nằm an toàn server-side.
 - **Khuyến nghị bảo mật:** tạo user `deploy` non-root + SSH key, `ufw` mở 22/80/443, chạy app dưới user đó thay vì root.
 
