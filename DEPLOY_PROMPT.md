@@ -22,7 +22,7 @@ disrupting the existing app.** Do all of this:
 2. Install Node.js LTS for the `deploy` user via **nvm** (do NOT change the system/global Node the
    existing app may rely on). `npm i -g pm2` is fine (pm2 runs many apps independently). nginx +
    certbot are likely already installed (the other app uses them) — `apt install -y` only if missing.
-3. As `deploy`: `git clone <REPO_URL> ~/tro-ly-aabw && cd ~/tro-ly-aabw && npm ci && npm run build`.
+3. As `deploy`: `git clone https://github.com/yuta9999zn/tro-ly-aabw.git ~/tro-ly-aabw && cd ~/tro-ly-aabw && npm ci && npm run build`.
 4. Create `~/tro-ly-aabw/.env.local` with `ANTHROPIC_API_KEY=<KEY>` (chmod 600). Never log the key.
 5. Start on the dedicated port: `PORT=3100 pm2 start "npm run start" --name tro-ly-aabw`
    (Next.js `next start` honors PORT). `pm2 save`. Run `pm2 startup` ONLY if pm2 isn't already set
@@ -37,7 +37,8 @@ disrupting the existing app.** Do all of this:
    should return JSON with `covered:true` and citations.
 
 Report: the step-0 inventory, the final public URL, and confirmation the existing project is
-unaffected. Placeholders to fill: <REPO_URL>, <KEY>, <SUBDOMAIN>, authorized SSH key.
+unaffected. Repo is set: https://github.com/yuta9999zn/tro-ly-aabw . Placeholders still to fill:
+<KEY> (Anthropic API key — do NOT commit it anywhere), <SUBDOMAIN>, authorized SSH key.
 
 ---
 
