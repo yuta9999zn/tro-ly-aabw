@@ -1,0 +1,30 @@
+# Deploys "Trợ lý AABW" ALONGSIDE the existing nb-web / nb-postgres / Caddy stack.
+# Access mode: direct IP:port — http://31.97.70.221:3100  (no domain/TLS yet).
+#
+# On the VPS:
+#   cd ~/tro-ly-aabw
+#   cp .env.example .env.local && nano .env.local   # paste the real ANTHROPIC_API_KEY
+#   docker compose up -d --build
+#
+# Update KB later:
+#   git pull && docker compose up -d --build
+services:
+  aabw-web:
+    build: .
+    image: tro-ly-aabw:latest
+    container_name: aabw-web
+    restart: unless-stopped
+    # Publish on 0.0.0.0:3100 so it is reachable via the public IP.
+    # Port 3000 is already taken by the existing nb-web container.
+    ports:
+      - "3100:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

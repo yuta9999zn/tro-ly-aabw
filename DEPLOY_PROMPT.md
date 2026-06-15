@@ -1,46 +1,61 @@
-# Deploy prompt — dán cho Claude edge (agent có SSH tới VPS)
+# Deploy — Hostinger VPS (Docker, song song dự án cũ)
 
-Sao chép nguyên khối dưới đây, điền các placeholder `<...>`, rồi đưa cho agent có quyền SSH vào VPS chạy. Người viết app (Kaori) KHÔNG tự SSH.
+> **State thực tế của VPS `31.97.70.221`** (Ubuntu 24.04, KVM2 — 2 vCPU / 8GB / 100GB, ~73GB free):
+> reverse proxy là **Caddy** (:80/:443), KHÔNG có nginx · app chạy bằng **Docker**, KHÔNG có pm2 / node-on-host.
+> Đang chạy: `nb-web` (`127.0.0.1:3000`, dự án cũ) + `nb-postgres` (`5432`). **Tuyệt đối không đụng 2 container này.**
+>
+> Chế độ truy cập đã chốt: **IP:port trực tiếp** → `http://31.97.70.221:3100` (chưa domain/TLS).
+> Port `3100` trống (đã verify không có trong `ss -ltnp`); `3000` đã bị `nb-web` chiếm.
 
----
+## Các lệnh chạy trên VPS (SSH root@31.97.70.221)
 
-You have SSH root access to a Hostinger VPS (Ubuntu 24.04 LTS, KVM2) at 31.97.70.221.
-**This VPS ALREADY RUNS another production project. Deploy "Trợ lý AABW" ALONGSIDE it WITHOUT
-disrupting the existing app.** Do all of this:
+```bash
+# 0) Kiểm tra lại trước khi đụng gì (không thay đổi gì cả)
+ss -ltnp | grep -E ':3100|:3000'   # 3100 phải TRỐNG; 3000 là nb-web — để yên
+docker ps                          # nb-web + nb-postgres phải đang chạy
 
-0. INVENTORY FIRST (do not change anything yet). Record and report:
-   - `ss -ltnp` (ports in use — the existing app's port must stay untouched)
-   - `pm2 list` (existing PM2 processes — do NOT stop/restart/delete any of them)
-   - `ls /etc/nginx/sites-enabled/` and read existing server blocks (do NOT edit them)
-   - `ufw status` (is the firewall active? which ports already allowed?)
-   - `node -v` and whether Node is managed by nvm
-   Pick a FREE internal port for this app (e.g. 3100) — verify it is not in `ss -ltnp`.
-1. Harden: create a non-root user `deploy` with sudo, copy the authorized SSH key to it, run the
-   app as `deploy` (not root). ufw: if INACTIVE, do NOT enable it blindly (could cut the existing
-   app) — only enable after explicitly allowing 22/80/443 AND every port the existing app needs; if
-   ACTIVE, just ensure 22/80/443 are allowed. When unsure, leave ufw as-is and report.
-2. Install Node.js LTS for the `deploy` user via **nvm** (do NOT change the system/global Node the
-   existing app may rely on). `npm i -g pm2` is fine (pm2 runs many apps independently). nginx +
-   certbot are likely already installed (the other app uses them) — `apt install -y` only if missing.
-3. As `deploy`: `git clone https://github.com/yuta9999zn/tro-ly-aabw.git ~/tro-ly-aabw && cd ~/tro-ly-aabw && npm ci && npm run build`.
-4. Create `~/tro-ly-aabw/.env.local` with `ANTHROPIC_API_KEY=<KEY>` (chmod 600). Never log the key.
-5. Start on the dedicated port: `PORT=3100 pm2 start "npm run start" --name tro-ly-aabw`
-   (Next.js `next start` honors PORT). `pm2 save`. Run `pm2 startup` ONLY if pm2 isn't already set
-   to start on boot (check first — the existing app likely configured it already).
-6. nginx: ADD A NEW server block file (e.g. `/etc/nginx/sites-available/tro-ly-aabw`) for <SUBDOMAIN>
-   → `proxy_pass http://127.0.0.1:3100;` with proxy headers. Symlink into sites-enabled.
-   **Do NOT modify the existing app's server block.** `nginx -t && systemctl reload nginx`
-   (reload, not restart — reload doesn't drop the existing app's connections).
-7. SSL: `certbot --nginx -d <SUBDOMAIN>` (HTTPS + auto-renew) — scope to the new subdomain only.
-8. Verify, and confirm the existing app still responds on its own domain/port:
-   `curl -s https://<SUBDOMAIN>/api/chat -H 'content-type: application/json' -d '{"question":"Có những track nào?","lang":"vi"}'`
-   should return JSON with `covered:true` and citations.
+# 1) Lấy code
+git clone https://github.com/yuta9999zn/tro-ly-aabw.git ~/tro-ly-aabw
+cd ~/tro-ly-aabw
 
-Report: the step-0 inventory, the final public URL, and confirmation the existing project is
-unaffected. Repo is set: https://github.com/yuta9999zn/tro-ly-aabw . Placeholders still to fill:
-<KEY> (Anthropic API key — do NOT commit it anywhere), <SUBDOMAIN>, authorized SSH key.
+# 2) Đặt API key (KHÔNG commit, KHÔNG log). chmod 600.
+cp .env.example .env.local
+nano .env.local                    # dán ANTHROPIC_API_KEY=sk-ant-...
+chmod 600 .env.local
 
----
+# 3) Build + chạy container (publish 0.0.0.0:3100)
+docker compose up -d --build
+
+# 4) Verify — bot trả JSON covered:true + citations
+sleep 5
+docker compose ps                  # aabw-web = healthy
+curl -s http://127.0.0.1:3100/api/chat \
+  -H 'content-type: application/json' \
+  -d '{"question":"Có những track nào?","lang":"vi"}'
+# Kỳ vọng: {"covered":true, "citations":[...], "answer":"...", "disclosure":{...}}
+
+# 5) Verify dự án cũ KHÔNG bị ảnh hưởng
+docker ps                          # nb-web + nb-postgres vẫn Up
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/   # nb-web vẫn phản hồi
+```
+
+Truy cập public: **http://31.97.70.221:3100**
+
+> ℹ️ Hostinger "Quy tắc tường lửa: 0" = không có rule chặn → port 3100 reachable từ ngoài.
+> Nếu sau này bật cloud firewall, nhớ allow `3100/tcp`.
 
 ## Cập nhật KB sau khi deploy
-Sửa `content/aabw-knowledge.md` → trên VPS (user `deploy`): `cd ~/tro-ly-aabw && git pull && npm run build && pm2 reload tro-ly-aabw`.
+Sửa `content/aabw-knowledge.md` (giữ mã `Fxx`) → push → trên VPS:
+```bash
+cd ~/tro-ly-aabw && git pull && docker compose up -d --build
+```
+
+## (Tùy chọn — sau này) Thêm domain + HTTPS qua Caddy
+Khi có subdomain, thêm block vào `Caddyfile` đang dùng (KHÔNG sửa block của nb-web):
+```caddy
+aabw.<domain> {
+    reverse_proxy 127.0.0.1:3100
+}
+```
+Rồi đổi compose về `ports: ["127.0.0.1:3100:3000"]` (chỉ Caddy thấy) và `docker compose up -d`.
+Reload Caddy: `docker exec <caddy-container> caddy reload --config /etc/caddy/Caddyfile` (hoặc `systemctl reload caddy` nếu chạy host). Caddy auto-cấp TLS Let's Encrypt.

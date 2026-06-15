@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.gitignore
+coverage
+out
+build
+*.tsbuildinfo
+npm-debug.log*
+.DS_Store
+# Never copy secrets into the build context / image layers.
+.env
+.env.*
+!.env.example
+README.md
+docs
+DEPLOY_PROMPT.md
