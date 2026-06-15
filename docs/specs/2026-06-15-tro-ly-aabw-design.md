@@ -27,6 +27,7 @@ AABW (Agentic AI Build Week, TP.HCM, 8–12/07/2026) có một track khởi đ�
 | **API route** (`app/api/chat/route.ts`) | Nhận `{question}`; dựng request Claude (KB trong system, câu hỏi trong user turn); chạy grounding gate; trả SSE | Next.js Route Handler (Edge/Node runtime) + `@anthropic-ai/sdk` | `ANTHROPIC_API_KEY`, `lib/knowledge.ts`, `lib/grounding.ts` |
 | **Knowledge base** (`lib/knowledge.ts` + `content/aabw-knowledge.md`) | Toàn bộ facts AABW chính thức, có cấu trúc + đánh số fact để cite | Markdown nhúng vào system prompt (prompt-cached) | — |
 | **Grounding gate** (`lib/grounding.ts`) | Logic |OR| port: phán covered?/cite/decline | system-prompt rule + structured output | model |
+| **Spam/abuse guard** (`lib/spam.ts`) | Chặn (a) hỏi quá nhiều câu ngoài chủ đề, (b) hỏi đi hỏi lại câu nghĩa tương đương | per-IP state + chuẩn hoá text + Jaccard | chạy trước/sau gate |
 
 ### Boundaries (kiểm tra tính cô lập)
 - **Chat UI** không biết gì về Claude — chỉ biết hợp đồng SSE của `/api/chat`. Đổi model/bên trong API không ảnh hưởng UI.
@@ -100,6 +101,9 @@ Các bước (Ubuntu 24.04 — nội dung sẽ đóng gói thành prompt cho Cla
 - **Cập nhật KB sát ngày:** sửa `content/aabw-knowledge.md` → `git pull` trên VPS → `npm run build` → `pm2 reload tro-ly-aabw`.
 - **Vercel (dự phòng):** nếu VPS kẹt, `vercel deploy` + env `ANTHROPIC_API_KEY` là đường thoát nhanh.
 - Rate-limit nhẹ ở API route (chống spam token) — giới hạn theo IP đơn giản (in-memory v0; nâng cấp sau nếu cần).
+- **Spam/abuse guard (`lib/spam.ts`)** — 2 lớp, per-IP, in-memory, cửa sổ thời gian:
+  - **Câu lặp/tương đương:** chuẩn hoá câu hỏi (lowercase, bỏ dấu tiếng Việt, bỏ ký tự, gộp space) → so Jaccard token với N câu gần nhất. Trùng/tương đương ≥ ngưỡng → trả lại câu trả lời cũ + nhắc "bạn vừa hỏi tương tự", KHÔNG gọi Claude lại (tiết kiệm token).
+  - **Ngoài chủ đề:** đếm số câu `covered=false` trong cửa sổ; vượt ngưỡng → chặn nhẹ + nhắc hỏi đúng chủ đề AABW, KHÔNG gọi Claude.
 
 ## 8. Test
 

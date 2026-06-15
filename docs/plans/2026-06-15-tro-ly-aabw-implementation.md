@@ -508,6 +508,22 @@ git commit -m "feat: in-memory per-IP rate limit"
 
 ---
 
+## Task 4b: Spam/abuse guard
+
+**Files:**
+- Create: `lib/spam.ts`
+- Test: `lib/spam.test.ts`
+
+Two layers, per-IP, in-memory, 5-min window: (a) repeated/equivalent questions (normalized text + Jaccard token similarity ≥ 0.85 → repeat); (b) too many off-topic (`covered=false`) answers in the window → block with an on-topic nudge (saves tokens).
+
+- [ ] **Step 1: Write the failing tests** (`lib/spam.test.ts`)
+- [ ] **Step 2: Run to verify fail** (`npm test`)
+- [ ] **Step 3: Implement** `lib/spam.ts` exporting `normalize`, `similar`, `checkBefore(ip, q, now)` → `{repeat, lastAnswer?}`, `recordAnswer(ip, q, result, now)`, `tooManyOffTopic(ip, now)`.
+- [ ] **Step 4: Run to verify pass**
+- [ ] **Step 5: Commit**
+
+> Wired into the route (Task 5): before calling the gate → `checkBefore` (repeat → return cached answer + note; off-topic-spam → return on-topic nudge, skip Claude). After the gate → `recordAnswer`.
+
 ## Task 5: Chat API route
 
 **Files:**
