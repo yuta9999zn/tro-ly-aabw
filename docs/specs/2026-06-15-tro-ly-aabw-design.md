@@ -86,7 +86,9 @@ Mỗi câu trả lời UI đính nhãn máy-đọc-được: `Tạo bởi AI · 
 - Node.js runtime đầy đủ → API key nằm an toàn server-side.
 - **Khuyến nghị bảo mật:** tạo user `deploy` non-root + SSH key, `ufw` mở 22/80/443, chạy app dưới user đó thay vì root.
 
-Các bước (Ubuntu 24.04):
+> **Cách thực thi deploy:** Kaori (agent này) **không SSH vào VPS**. Tới bước deploy, Kaori viết sẵn **một prompt copy-paste hoàn chỉnh để anh đưa cho "Claude edge"** (Claude có quyền SSH vào `31.97.70.221`) chạy: hardening (user `deploy` non-root + SSH key + `ufw`), cài Node LTS/PM2/nginx/certbot, clone + `npm ci` + build, set `ANTHROPIC_API_KEY` trong `.env` (chmod 600), `pm2 start` + `pm2 startup`, nginx reverse proxy + SSL. Prompt này là deliverable cuối của giai đoạn deploy.
+
+Các bước (Ubuntu 24.04 — nội dung sẽ đóng gói thành prompt cho Claude edge):
 1. Cài Node.js LTS (qua `nodesource` hoặc `nvm`) + `pm2` (`npm i -g pm2`). Cài `nginx` + `certbot` nếu chưa có (`apt install nginx certbot python3-certbot-nginx`).
 2. Clone repo → `npm ci` → `npm run build` (`next build`).
 3. Tạo `.env` trên server chứa `ANTHROPIC_API_KEY` (chmod 600, không commit, không xuống client).
